@@ -202,10 +202,10 @@ Todos with reminders show a **🔔 badge** with abbreviated time:
 - `🔔 1w` - 1 week
 
 ### How It Works
-- The open app tab checks every 30 seconds for pending reminders
+- System checks every minute for pending reminders
 - Notification sent when reminder time arrives
 - Each reminder only sent once (tracked via `last_notification_sent`)
-- The app marks a reminder sent after the browser accepts it; a failed attempt can be retried
+- Notifications persist until acknowledged
 - Works even if browser tab is in background
 
 ---
@@ -416,7 +416,7 @@ Templates preserve:
 **Note**: Templates do NOT include:
 - ❌ Specific due dates (you set when creating)
 - ❌ Tags (selected when creating from template)
-- ✅ Subtasks are captured and recreated as incomplete tasks
+- ❌ Subtasks (added after creation)
 
 ### Template Categories
 
@@ -746,24 +746,21 @@ Backup your todos, share them between devices, or analyze data in spreadsheets w
 - ✅ Best for backup and data transfer
 - ✅ Human-readable format
 
-**JSON envelope** (original database IDs are omitted):
+**Fields Included**:
 ```json
 {
-  "version": 1,
-  "exported_at": "2026-10-30T10:00:00.000Z",
-  "todos": [{
-    "title": "Sample Todo",
-    "completed": false,
-    "due_date": "2026-11-10T14:00",
-    "priority": "high",
-    "is_recurring": true,
-    "recurrence_pattern": "weekly",
-    "reminder_minutes": 60,
-    "subtasks": [{ "title": "First step", "completed": false, "position": 0 }],
-    "tags": [{ "name": "Work", "color": "#3B82F6" }]
-  }]
+  "id": 1,
+  "title": "Sample Todo",
+  "completed": false,
+  "due_date": "2025-11-10T14:00",
+  "priority": "high",
+  "is_recurring": true,
+  "recurrence_pattern": "weekly",
+  "reminder_minutes": 60,
+  "created_at": "2025-11-02T10:30:00"
 }
 ```
+
 **CSV Export**
 - ✅ Spreadsheet-friendly format
 - ✅ Opens in Excel, Google Sheets, Numbers
@@ -810,13 +807,13 @@ ID,Title,Completed,Due Date,Priority,Recurring,Pattern,Reminder
 - Priority levels
 - Recurrence settings
 - Reminder timings
-- Subtasks and tag names/colors
+- Creation timestamps
 
 **What's NOT Imported**:
 - ❌ Original todo IDs (new IDs assigned)
 - ❌ User associations (links to importing user)
-- Original tag IDs (matching names are reused or new tags are created)
-- Original subtask IDs (new IDs are assigned)
+- ❌ Tags (must be recreated/reassigned)
+- ❌ Subtasks (if not in export format)
 
 #### Import Validation
 
