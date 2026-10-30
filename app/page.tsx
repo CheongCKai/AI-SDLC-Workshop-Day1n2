@@ -5,7 +5,7 @@ import {useRouter} from 'next/navigation';
 import type {Todo,Tag,Template} from '@/lib/db';
 import {useNotifications} from '@/lib/hooks/useNotifications';
 import {getSingaporeNow,parseSingapore,describeDue} from '@/lib/timezone';
-import {applyFilters,initialFilters,progress,activeFilterKey,parseStoredFilters,type Filters} from '@/lib/filters';
+import {applyFilters,groupTodos,initialFilters,progress,activeFilterKey,parseStoredFilters,type Filters} from '@/lib/filters';
 import {readableTagText} from '@/lib/color';
 import Modal from './components/Modal';
 const reminders:Record<number,string>={15:'15m',30:'30m',60:'1h',120:'2h',1440:'1d',2880:'2d',10080:'1w'};
@@ -33,7 +33,7 @@ useEffect(()=>{if(filterKey){try{sessionStorage.setItem(filterKey,JSON.stringify
   async function add(e:React.FormEvent){e.preventDefault();await perform(async()=>{await api('/api/todos','POST',{title,priority,due_date:due||null,is_recurring:!!repeat,recurrence_pattern:repeat||null,reminder_minutes:reminder?Number(reminder):null,tagIds:selectedTags});setTitle('');setDue('');setRepeat('');setReminder('');setSelectedTags([])},'Task added')}
   async function update(todo:Todo,data:Partial<Todo>){setTodos(rows=>rows.map(t=>t.id===todo.id?{...t,...data}:t));await perform(()=>api(`/api/todos/${todo.id}`,'PUT',data))}
   const filtered=useMemo(()=>applyFilters(todos,filters),[todos,filters]);
-  const groups=useMemo(()=>{void tick;const now=getSingaporeNow().getTime();const rank={high:0,medium:1,low:2};const sort=(a:Todo,b:Todo)=>rank[a.priority]-rank[b.priority]||(a.due_date?parseSingapore(a.due_date).getTime():Infinity)-(b.due_date?parseSingapore(b.due_date).getTime():Infinity)||b.created_at.localeCompare(a.created_at)||b.id-a.id;return [{name:'Overdue',rows:filtered.filter(t=>!t.completed&&t.due_date&&parseSingapore(t.due_date).getTime()<now).sort(sort)},{name:'Pending',rows:filtered.filter(t=>!t.completed&&(!t.due_date||parseSingapore(t.due_date).getTime()>=now)).sort(sort)},{name:'Completed',rows:filtered.filter(t=>t.completed).sort((a,b)=>(b.completed_at||b.updated_at||b.created_at).localeCompare(a.completed_at||a.updated_at||a.created_at)||b.id-a.id)}]},[filtered,tick]);
+  const groups=useMemo(()=>{void tick;return groupTodos(filtered,getSingaporeNow().getTime())},[filtered,tick]);
   const activeFilters=Object.values(filters).filter(Boolean).length;
   function clearFilters(){setFilters(initialFilters);setSearch('')}
   function savePreset(e:React.FormEvent){e.preventDefault();if(!presetName.trim())return;const next=[...presets,{id:crypto.randomUUID(),name:presetName.trim(),filters,createdAt:getSingaporeNow().toISOString()}];setPresets(next);localStorage.setItem('todo-app:filter-presets',JSON.stringify(next));setPresetName('')}
