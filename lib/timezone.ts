@@ -21,7 +21,21 @@ export function describeDue(value:string, now:Date=getSingaporeNow()):{text:stri
   const amount=mins<60?`${mins} minute${mins===1?'':'s'}`:mins<1440?`${Math.ceil(mins/60)} hour${Math.ceil(mins/60)===1?'':'s'}`:`${Math.ceil(mins/1440)} day${Math.ceil(mins/1440)===1?'':'s'}`;
   if(diff<0)return {text:`${amount} overdue`,level:'overdue'};
   if(diff<3600000)return {text:`Due in ${amount}`,level:'urgent'};
-  if(diff<86400000)return {text:`Due in ${amount}`,level:'soon'};
-  if(diff<604800000)return {text:`Due in ${amount}`,level:'upcoming'};
+  const timestamp=new Intl.DateTimeFormat('en-SG',{timeZone:'Asia/Singapore',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(parseSingapore(value));
+  if(diff<86400000)return {text:`Due in ${amount} (${timestamp} SGT)`,level:'soon'};
+  if(diff<604800000)return {text:`Due in ${amount} (${timestamp} SGT)`,level:'upcoming'};
   return {text:`Due ${value.replace('T',' ').slice(0,16)} (SGT)`,level:'later'};
+}
+
+/** Convert an exported creation timestamp into SQLite's UTC timestamp format. */
+export function parseExportTimestamp(value:string):string|null {
+  const sqlite=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value);
+  const instant=parseSingapore(sqlite?`${value.replace(' ','T')}Z`:value);
+  return Number.isNaN(instant.getTime())?null:instant.toISOString().slice(0,19).replace('T',' ');
+}
+/** A calendar date is always interpreted in Singapore, including offset-based imports. */
+export function singaporeDateKey(value:string):string|null {
+  if(!/(?:Z|[+-]\d\d:\d\d)$/i.test(value))return Number.isNaN(parseSingapore(value).getTime())?null:value.slice(0,10);
+  const instant=parseSingapore(value);
+  return Number.isNaN(instant.getTime())?null:formatSingaporeDate(instant);
 }
