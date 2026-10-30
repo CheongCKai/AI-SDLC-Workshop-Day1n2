@@ -7,3 +7,5 @@ All task APIs require the HTTP-only session cookie and scope data to its owner. 
 JSON exports are version 1 and include creation and completion timestamps, subtasks and tag names/colors, not database IDs. Imports accept both current exports with creation timestamps and older exports without them. Offset-based due dates are normalized to Singapore time. Imports validate before writing and run as one transaction. Re-importing intentionally creates new tasks; existing tag names are reused case-insensitively.
 
 When an existing database is upgraded, completed tasks that predate completion tracking receive their last update time (or creation time if no update was recorded). Their original completion times cannot be reconstructed. New completions and exports retain the actual recorded completion time.
+
+Template creation and updates accept optional `tagIds: number[]` owned by the signed-in user. Omitting `tagIds` on update retains existing tags; an empty array removes them. Template listings include `tagIds`, and using a template attaches those tags to the new task. Tag edits are reflected automatically, and deleting a tag removes its template associations.
